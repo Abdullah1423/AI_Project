@@ -4,7 +4,7 @@ import random
 parameters = {
     "beans": ["Arabica", "Robusta"],
     "roast": ["light", "meium", "dark"],
-    "grind_size": ["fine", "medium", "coarse"],
+    "grind_size": ["extra fine","fine","fine-medium", "medium","medium-coarse", "coarse", "extra coarse"],
     "water_ratio": (10, 20),  # grams of water per gram of coffee
     "temperature": (80, 100),  # degrees Celsius
     "brewing_time": (1, 10),  # minutes
@@ -87,7 +87,7 @@ def mutate(recipe, mutation_rate=0.1):
                 recipe[key] += change
                 # Clamp values within valid ranges
                 recipe[key] = max(parameters[key][0], min(parameters[key][1], recipe[key]))
-        elif key in ["beans", "grind_size"]:
+        elif key in ["beans", "grind_size","roast"]:
             if random.random() < mutation_rate:
                 recipe[key] = random.choice(parameters[key])
     return recipe
