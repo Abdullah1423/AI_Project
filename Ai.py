@@ -110,9 +110,9 @@ def evolutionary_algorithm(population_size=10, generations=5, mutation_rate=0.1)
         print(best_recipe)
         
         print(f"\nSecond Best Recipe of Generation {generation + 1}:")
-        best_recipe, best_score = fitness_scores[0]
-        print(f"Score: {best_score:.2f}")
-        print(best_recipe)
+        Second_best_recipe, Second_best_score = fitness_scores[1]
+        print(f"Score: {Second_best_score:.2f}")
+        print(Second_best_recipe)
         # Selection: Keep the top half of the population
         selected = [fs[0] for fs in fitness_scores[:len(fitness_scores)//2]]
         
