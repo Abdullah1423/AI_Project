@@ -3,22 +3,24 @@ import random
 # Define the parameter ranges and options for a coffee recipe
 parameters = {
     "beans": ["Arabica", "Robusta"],
+    "roast": ["light", "meium", "dark"],
     "grind_size": ["fine", "medium", "coarse"],
     "water_ratio": (10, 20),  # grams of water per gram of coffee
     "temperature": (80, 100),  # degrees Celsius
     "brewing_time": (1, 10),  # minutes
-    "additives": ["milk", "sugar"]
+    "additives": ["milk", "sugar","caramel syrup", "vanilla syrup"],
 }
 
 # Function to generate a random coffee recipe
 def generate_random_recipe():
     return {
         "beans": random.choice(parameters["beans"]),
+        "roast": random.choice(parameters["roast"]),
         "grind_size": random.choice(parameters["grind_size"]),
         "water_ratio": round(random.uniform(*parameters["water_ratio"]), 2),
         "temperature": round(random.uniform(*parameters["temperature"]), 2),
         "brewing_time": round(random.uniform(*parameters["brewing_time"]), 2),
-        "additives": {add: round(random.uniform(0, 20), 2) for add in parameters["additives"]}  # Random additive proportions
+        "additives": {add: round(random.uniform(0, 30), 2) for add in parameters["additives"]}  # Random additive proportions
     }
 
 # Fitness function based on user rating
@@ -28,6 +30,7 @@ def fitness(recipe):
     """
     print("\nEvaluate the following coffee recipe:")
     print(f"Beans: {recipe['beans']}")
+    print(f"roast: {recipe['roast']}")
     print(f"Grind Size: {recipe['grind_size']}")
     print(f"Water Ratio: {recipe['water_ratio']} grams of water per gram of coffee")
     print(f"Temperature: {recipe['temperature']}°C")
