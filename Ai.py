@@ -22,7 +22,7 @@ def generate_random_recipe():
         "brewing_time": round(random.uniform(*parameters["brewing_time"]), 2),
         "additives": {add: round(random.uniform(0, 30), 2) for add in parameters["additives"]}  # Random additive proportions
     }
-
+    
 # Fitness function based on user rating
 def fitness(recipe):
     """
