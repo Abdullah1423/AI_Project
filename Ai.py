@@ -3,26 +3,94 @@ import random
 # Define the parameter ranges and options for a coffee recipe
 parameters = {
     "beans": ["Arabica", "Robusta"],
-    "roast": ["light", "meium", "dark"],
-    "grind_size": ["extra fine","fine","fine-medium", "medium","medium-coarse", "coarse", "extra coarse"],
+    "roast": ["light", "medium", "dark"],
+    "grind_size": ["extra fine", "fine", "fine-medium", "medium", "medium-coarse", "coarse", "extra coarse"],
     "water_ratio": (10, 20),  # grams of water per gram of coffee
     "temperature": (80, 100),  # degrees Celsius
     "brewing_time": (1, 10),  # minutes
-    "additives": ["milk", "sugar","caramel syrup", "vanilla syrup"],
+    "additives": ["milk", "sugar", "caramel syrup", "vanilla syrup"],
 }
 
-# Function to generate a random coffee recipe
-def generate_random_recipe():
-    return {
-        "beans": random.choice(parameters["beans"]),
-        "roast": random.choice(parameters["roast"]),
-        "grind_size": random.choice(parameters["grind_size"]),
-        "water_ratio": round(random.uniform(*parameters["water_ratio"]), 2),
-        "temperature": round(random.uniform(*parameters["temperature"]), 2),
-        "brewing_time": round(random.uniform(*parameters["brewing_time"]), 2),
-        "additives": {add: round(random.uniform(0, 30), 2) for add in parameters["additives"]}  # Random additive proportions
-    }
+# Update the generate_random_recipe function to respect constraints
+def generate_random_recipe(user_constraints):
+    """
+    Generates a random coffee recipe that satisfies user constraints.
+    """
+    while True:
+        recipe = {
+            "beans": random.choice(parameters["beans"]),
+            "roast": random.choice(parameters["roast"]),
+            "grind_size": random.choice(parameters["grind_size"]),
+            "water_ratio": round(random.uniform(*parameters["water_ratio"]), 2),
+            "temperature": round(random.uniform(*parameters["temperature"]), 2),
+            "brewing_time": round(random.uniform(*parameters["brewing_time"]), 2),
+            "additives": {add: round(random.uniform(0, 30), 2) for add in parameters["additives"]}
+        }
+        if check_constraints(recipe, user_constraints):
+            return recipe
     
+
+
+def get_user_constraints():
+    """
+    Allows the user to define constraints interactively.
+    """
+    print("Define your constraints for the coffee recipe.")
+    constraints = []
+
+    while True:
+        print("\nAdd a new constraint or type 'done' to finish.")
+        print("Example constraints:")
+        print('- "recipe[\'beans\'] == \'Arabica\' and recipe[\'roast\'] == \'dark\'"')
+        print('- "recipe[\'temperature\'] > 95"')
+        user_input = input("Enter constraint: ").strip()
+        
+        if user_input.lower() == "done":
+            break
+
+        try:
+            # Validate the constraint syntax
+            test_recipe = {
+                "beans": "Arabica",
+                "roast": "dark",
+                "grind_size": "medium",
+                "water_ratio": 15,
+                "temperature": 90,
+                "brewing_time": 5,
+                "additives": {"milk": 10, "sugar": 5, "caramel syrup": 0, "vanilla syrup": 0},
+            }
+            result = eval(user_input, {}, {"recipe": test_recipe})
+            if isinstance(result, bool):
+                constraints.append(user_input)
+                print(f"Constraint added successfully: {user_input}")
+            else:
+                print("Invalid constraint: Must evaluate to a boolean.")
+        except Exception as e:
+            print(f"Invalid constraint. Please try again. Error: {e}")
+
+    print("\nFinal list of constraints:")
+    for i, constraint in enumerate(constraints, 1):
+        print(f"{i}. {constraint}")
+    
+    return constraints
+
+
+def check_constraints(recipe, user_constraints):
+    """
+    Validates a recipe against user-defined constraints.
+    """
+    for constraint in user_constraints:
+        try:
+            result = eval(constraint, {}, {"recipe": recipe})
+            print(f"Evaluating constraint: {constraint}, Result: {result}")  # Debug log
+            if not result:
+                return False
+        except Exception as e:
+            print(f"Error evaluating constraint '{constraint}': {e}")
+            return False
+    return True
+
+
 # Fitness function based on user rating
 def fitness(recipe):
     """
@@ -93,9 +161,21 @@ def mutate(recipe, mutation_rate=0.1):
     return recipe
 
 # Evolutionary algorithm
-def evolutionary_algorithm(population_size=10, generations=5, mutation_rate=0.1):
-    # Initialize the population with random recipes
-    population = [generate_random_recipe() for _ in range(population_size)]
+# Evolutionary algorithm
+def evolutionary_algorithm(population_size=10, generations=5, mutation_rate=0.1, user_constraints=None):
+    """
+    Runs an evolutionary algorithm to optimize coffee recipes.
+    :param population_size: Number of recipes in the population.
+    :param generations: Number of generations to evolve.
+    :param mutation_rate: Probability of mutating a recipe.
+    :param user_constraints: List of user-defined constraints.
+    :return: The best recipe after evolution.
+    """
+    if user_constraints is None:
+        user_constraints = []
+
+    # Initialize the population with random recipes that satisfy constraints
+    population = [generate_random_recipe(user_constraints) for _ in range(population_size)]
     
     for generation in range(generations):
         print(f"\n=== Generation {generation + 1} ===")
@@ -109,10 +189,6 @@ def evolutionary_algorithm(population_size=10, generations=5, mutation_rate=0.1)
         print(f"Score: {best_score:.2f}")
         print(best_recipe)
         
-        print(f"\nSecond Best Recipe of Generation {generation + 1}:")
-        Second_best_recipe, Second_best_score = fitness_scores[1]
-        print(f"Score: {Second_best_score:.2f}")
-        print(Second_best_recipe)
         # Selection: Keep the top half of the population
         selected = [fs[0] for fs in fitness_scores[:len(fitness_scores)//2]]
         
@@ -122,7 +198,8 @@ def evolutionary_algorithm(population_size=10, generations=5, mutation_rate=0.1)
             parent1, parent2 = random.sample(selected, 2)
             child = crossover(parent1, parent2)
             child = mutate(child, mutation_rate)
-            new_population.append(child)
+            if check_constraints(child, user_constraints):
+                new_population.append(child)
         
         # Update the population
         population = new_population
@@ -136,14 +213,16 @@ def evolutionary_algorithm(population_size=10, generations=5, mutation_rate=0.1)
 # Main program to run the optimizer
 if __name__ == "__main__":
     print("Welcome to the Coffee Recipe Optimizer!")
+    print("Define constraints to refine the optimization process.")
+    user_constraints = get_user_constraints()
+
     print("You will be asked to rate recipes during the optimization process.")
-    
     try:
         generations = int(input("Enter the number of generations to run (default is 50): ") or 50)
-        best_recipe = evolutionary_algorithm(population_size=10, generations=generations, mutation_rate=0.2)
+        best_recipe = evolutionary_algorithm(population_size=10, generations=generations, mutation_rate=0.2, user_constraints=user_constraints)
     except ValueError:
         print("Invalid input. Using default of 50 generations.")
-        best_recipe = evolutionary_algorithm(population_size=10, generations=50, mutation_rate=0.2)
+        best_recipe = evolutionary_algorithm(population_size=10, generations=50, mutation_rate=0.2, user_constraints=user_constraints)
     
     print("\nThank you for participating! The best recipe is:")
     print(best_recipe)
